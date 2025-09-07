@@ -1,71 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, Image, View, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView, useColorScheme, ColorSchemeName } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-import { Link, Stack } from 'expo-router';
+
+// --- Color Palettes ---
+const Colors = {
+  light: {
+    background: '#FFFFFF',
+    text: '#121212',
+    card: '#F0F0F0',
+    cardHeaderText: '#333333',
+    subtleText: '#555555',
+    gold: '#D4AF37',
+    green: '#4CAF50',
+    red: '#F44336',
+    neutral: '#A0A0A0',
+    button: '#212121',
+    buttonText: '#FFFFFF'
+  },
+  dark: {
+    background: '#000000',
+    text: '#EAEAEA',
+    card: '#1E1E1E',
+    cardHeaderText: '#CCCCCC',
+    subtleText: '#888888',
+    gold: '#FFD700',
+    green: '#4CAF50',
+    red: '#F44336',
+    neutral: '#A0A0A0',
+    button: '#FFD700',
+    buttonText: '#121212'
+  }
+};
 
 // --- Type Definitions ---
-// This defines the structure for a single price item (e.g., gold or tether)
 interface PriceItem {
   value: string;
   change: string;
 }
-
-// This defines the structure of the entire JSON object returned by your Cloudflare Worker
 interface PriceData {
   gold: PriceItem;
   tether: PriceItem;
 }
 
 // --- API Configuration ---
-// ⚠️ IMPORTANT: Replace this URL with the one for your deployed Cloudflare Worker
 const API_ENDPOINT = 'https://gold-prize-api.hssdbrv.workers.dev/';
-
-// This function makes the network request to your Cloudflare Worker API
 const fetchPricesFromAPI = async (): Promise<PriceData> => {
-  console.log("Attempting to fetch prices from API...");
   const response = await fetch(API_ENDPOINT);
-
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("API Error Response:", errorText);
     throw new Error('Failed to fetch data from the API.');
   }
-
-  const data: PriceData = await response.json();
-  console.log("Successfully fetched data");
-  return data;
+  return response.json();
 };
 
 // --- Helper Functions & Components ---
-const getChangeColor = (change: string) => {
-  if (change.includes('+')) return '#4CAF50'; // Green for positive
-  if (change.includes('-')) return '#F44336'; // Red for negative
-  return '#A0A0A0'; // Neutral gray
+const getChangeColor = (change: string, theme: typeof Colors.light) => {
+  if (change.includes('+')) return theme.green;
+  if (change.includes('-')) return theme.red;
+  return theme.neutral;
 };
 
-// A reusable component to display a price card for an item
-const PriceCard = ({ title, data, icon }: { title: string, data: PriceItem, icon: React.ReactNode }) => (
-  <View style={styles.card}>
-    <View style={styles.cardHeader}>
+// A reusable themed component for the price cards
+const PriceCard = ({ title, data, icon, theme }: { title: string, data: PriceItem, icon: React.ReactNode, theme: typeof Colors.light }) => (
+  <View style={getStyles(theme).card}>
+    <View style={getStyles(theme).cardHeader}>
         {icon}
-        <Text style={styles.itemName}>{title}</Text>
+        <Text style={getStyles(theme).itemName}>{title}</Text>
     </View>
-    
-    <View style={styles.priceContainer}>
-        <View style={styles.priceAndChange}>
-            <Text style={styles.priceText}>{data.value}</Text>
-            <Text style={[styles.changeText, { color: getChangeColor(data.change) }]}>
+    <View style={getStyles(theme).priceContainer}>
+        <View style={getStyles(theme).priceAndChange}>
+            <Text style={getStyles(theme).priceText}>{data.value}</Text>
+            <Text style={[getStyles(theme).changeText, { color: getChangeColor(data.change, theme) }]}>
                 {data.change}
             </Text>
         </View>
-        <Text style={styles.currencyText}>ریال</Text>
+        <Text style={getStyles(theme).currencyText}>ریال</Text>
     </View>
   </View>
 );
 
 // --- Main App Screen ---
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === 'dark' ? Colors.dark : Colors.light;
+  const styles = getStyles(theme); // Get styles dynamically
+
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +98,6 @@ export default function HomeScreen() {
       setPriceData(data);
       setLastUpdated(new Date());
     } catch (e) {
-      console.error("Failed to fetch prices:", e);
       setError('امکان دریافت قیمت وجود نداشت. لطفا دوباره تلاش کنید.');
     } finally {
       setIsLoading(false);
@@ -92,11 +110,10 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
-
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView style={{width: '100%'}} contentContainerStyle={{alignItems: 'center'}}>
         {isLoading ? (
-          <ActivityIndicator size="large" color="#ffd700ff" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color={theme.gold} style={{ marginTop: 50 }} />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : priceData ? (
@@ -104,12 +121,14 @@ export default function HomeScreen() {
             <PriceCard 
               title="هر گرم طلای ۱۸ عیار" 
               data={priceData.gold} 
-              icon={<FontAwesome5 name="ring" size={24} color="#FFD700" />}
+              icon={<FontAwesome5 name="ring" size={24} color={theme.gold} />}
+              theme={theme}
             />
             <PriceCard 
               title="تتر" 
               data={priceData.tether}
-              icon={<FontAwesome5 name="dollar-sign" size={24} color="#4CAF50" />}
+              icon={<FontAwesome5 name="dollar-sign" size={24} color={theme.green} />}
+              theme={theme}
             />
           </>
         ) : null}
@@ -122,66 +141,44 @@ export default function HomeScreen() {
             </Text>
         )}
         <TouchableOpacity style={styles.refreshButton} onPress={loadPrices} disabled={isLoading}>
-            <MaterialIcons name="refresh" size={24} color="#121212" />
+            <MaterialIcons name="refresh" size={24} color={theme.buttonText} />
         </TouchableOpacity>
-        <Stack.Screen
-        options={{
-          title: 'Arzesh',
-          headerStyle: { backgroundColor: '#000000ff' },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'black',
-          },
-        }}
-      />
       </View>
     </SafeAreaView>
   );
 }
 
-// --- Styles ---
-const styles = StyleSheet.create({
+// --- Dynamic Stylesheet ---
+// This function creates the styles based on the current theme
+const getStyles = (theme: typeof Colors.light) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000ff',
+    backgroundColor: theme.background,
     alignItems: 'center',
-    
-  },
-  header: {
-    width: '100%',
-    paddingVertical: 20,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#EAEAEA',
   },
   card: {
-    width: '85%',
-    backgroundColor: '#1E1E1E',
+    width: '90%',
+    backgroundColor: theme.card,
     borderRadius: 20,
     padding: 20,
-    marginBottom: 0,
     marginTop: 30,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.30,
-    shadowRadius: 4.65,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   cardHeader: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: theme.background,
     paddingBottom: 15,
     marginBottom: 15,
   },
   itemName: {
     fontSize: 18,
-    color: '#E0E0E0',
+    color: theme.text,
     fontWeight: '500',
     marginRight: 10,
   },
@@ -196,7 +193,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: theme.gold,
     letterSpacing: 1,
   },
   changeText: {
@@ -206,13 +203,13 @@ const styles = StyleSheet.create({
   },
   currencyText: {
     fontSize: 18,
-    color: '#FFD700',
+    color: theme.gold,
     marginLeft: 10,
     fontWeight: '500',
   },
   errorText: {
     fontSize: 18,
-    color: '#FF6B6B',
+    color: theme.red,
     textAlign: 'center',
     marginTop: 50,
   },
@@ -225,12 +222,11 @@ const styles = StyleSheet.create({
   },
   updateText: {
     fontSize: 14,
-    color: '#888',
+    color: theme.subtleText,
   },
   refreshButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: theme.button,
     padding: 15,
-    borderRadius: 50, // Makes it a circle
+    borderRadius: 50,
   },
 });
-
