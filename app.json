@@ -2,7 +2,7 @@
   "expo": {
     "name": "Arzesh",
     "slug": "arzesh",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "arzesh",
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/splash-icon.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
@@ -47,10 +47,13 @@
     },
     "owner": "thehsb",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/be8bebac-65a3-442f-be7a-76be04360a55"
-    }
+      "url": "https://u.expo.dev/be8bebac-65a3-442f-be7a-76be04360a55",
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
+    },
   }
 }

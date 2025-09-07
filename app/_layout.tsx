@@ -1,4 +1,8 @@
 import { Stack, } from "expo-router";
+import { useEffect } from 'react';
+import * as NavigationBar from 'expo-navigation-bar';
+import { Platform } from "react-native";
+
 
 export default function RootLayout() {
   return (
@@ -17,3 +21,9 @@ export default function RootLayout() {
     </Stack>
   );
 }
+
+useEffect(() => {
+  if (Platform.OS === 'android') {
+    NavigationBar.setStyle('dark');
+  }
+}, []);
