@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
+import { StyleSheet, Text, Image, View, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Link, Stack } from 'expo-router';
 
 // --- Type Definitions ---
 // This defines the structure for a single price item (e.g., gold or tether)
@@ -32,7 +33,7 @@ const fetchPricesFromAPI = async (): Promise<PriceData> => {
   }
 
   const data: PriceData = await response.json();
-  console.log("Successfully fetched data:", data);
+  console.log("Successfully fetched data");
   return data;
 };
 
@@ -92,14 +93,10 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>Arzesh</Text>
-      </View>
 
       <ScrollView style={{width: '100%'}} contentContainerStyle={{alignItems: 'center'}}>
         {isLoading ? (
-          <ActivityIndicator size="large" color="#FFD700" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#ffd700ff" style={{ marginTop: 50 }} />
         ) : error ? (
           <Text style={styles.errorText}>{error}</Text>
         ) : priceData ? (
@@ -121,12 +118,22 @@ export default function HomeScreen() {
       <View style={styles.footer}>
         {lastUpdated && !isLoading && (
             <Text style={styles.updateText}>
-            آخرین بروزرسانی: {lastUpdated.toLocaleTimeString('fa-IR')}
+            آخرین بروزرسانی: {lastUpdated.toLocaleTimeString('fa-ir')}
             </Text>
         )}
         <TouchableOpacity style={styles.refreshButton} onPress={loadPrices} disabled={isLoading}>
             <MaterialIcons name="refresh" size={24} color="#121212" />
         </TouchableOpacity>
+        <Stack.Screen
+        options={{
+          title: 'Arzesh',
+          headerStyle: { backgroundColor: '#000000ff' },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'black',
+          },
+        }}
+      />
       </View>
     </SafeAreaView>
   );
@@ -136,8 +143,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#000000ff',
     alignItems: 'center',
+    
   },
   header: {
     width: '100%',
@@ -151,11 +159,12 @@ const styles = StyleSheet.create({
     color: '#EAEAEA',
   },
   card: {
-    width: '90%',
+    width: '85%',
     backgroundColor: '#1E1E1E',
     borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 0,
+    marginTop: 30,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.30,
