@@ -1,47 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, SafeAreaView, ScrollView, useColorScheme, ColorSchemeName } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, useColorScheme, ColorSchemeName } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+// --- New Imports ---
+import { MotiView } from 'moti';
+import { Skeleton } from 'moti/skeleton';
+import Toast from 'react-native-toast-message';
 
 // --- Color Palettes ---
 const Colors = {
   light: {
-    background: '#FFFFFF',
-    text: '#121212',
-    card: '#F0F0F0',
-    cardHeaderText: '#333333',
-    subtleText: '#555555',
-    gold: '#D4AF37',
-    green: '#4CAF50',
-    red: '#F44336',
-    neutral: '#A0A0A0',
-    button: '#212121',
-    buttonText: '#FFFFFF'
+    background: '#FFFFFF', text: '#121212', card: '#F0F0F0',
+    cardHeaderText: '#333333', subtleText: '#555555', gold: '#D4AF37',
+    green: '#4CAF50', red: '#F44336', neutral: '#A0A0A0',
+    button: '#212121', buttonText: '#FFFFFF'
   },
   dark: {
-    background: '#000000',
-    text: '#EAEAEA',
-    card: '#1E1E1E',
-    cardHeaderText: '#CCCCCC',
-    subtleText: '#888888',
-    gold: '#FFD700',
-    green: '#4CAF50',
-    red: '#F44336',
-    neutral: '#A0A0A0',
-    button: '#FFD700',
-    buttonText: '#121212'
+    background: '#000000', text: '#EAEAEA', card: '#1E1E1E',
+    cardHeaderText: '#CCCCCC', subtleText: '#888888', gold: '#FFD700',
+    green: '#4CAF50', red: '#F44336', neutral: '#A0A0A0',
+    button: '#FFD700', buttonText: '#121212'
   }
 };
 
 // --- Type Definitions ---
-interface PriceItem {
-  value: string;
-  change: string;
-}
-interface PriceData {
-  gold: PriceItem;
-  tether: PriceItem;
-}
+interface PriceItem { value: string; change: string; }
+interface PriceData { gold: PriceItem; tether: PriceItem; }
 
 // --- API Configuration ---
 const API_ENDPOINT = 'https://sierrabravo.hssdbrv.workers.dev/api/currency';
@@ -60,7 +44,6 @@ const getChangeColor = (change: string, theme: typeof Colors.light) => {
   return theme.neutral;
 };
 
-// A reusable themed component for the price cards
 const PriceCard = ({ title, data, icon, theme }: { title: string, data: PriceItem, icon: React.ReactNode, theme: typeof Colors.light }) => (
   <View style={getStyles(theme).card}>
     <View style={getStyles(theme).cardHeader}>
@@ -79,6 +62,34 @@ const PriceCard = ({ title, data, icon, theme }: { title: string, data: PriceIte
   </View>
 );
 
+// --- New Skeleton Card component for the loading state ---
+const SkeletonCard = ({ theme }: { theme: typeof Colors.light }) => {
+    const colorScheme = useColorScheme();
+    const styles = getStyles(theme);
+    
+    return(
+        <MotiView
+            transition={{ type: 'timing' }}
+            style={styles.card}
+            animate={{ backgroundColor: theme.card }}
+        >
+            <View style={styles.cardHeader}>
+                <Skeleton colorMode={colorScheme ?? 'light'} radius="round" height={24} width={24} />
+                <View style={{width: 10}}/>
+                <Skeleton colorMode={colorScheme ?? 'light'} height={20} width={'60%'} />
+            </View>
+            <View style={styles.priceContainer}>
+                <View style={styles.priceAndChange}>
+                    <Skeleton colorMode={colorScheme ?? 'light'} height={36} width={150} />
+                    <View style={{height: 10}}/>
+                    <Skeleton colorMode={colorScheme ?? 'light'} height={16} width={80} />
+                </View>
+            </View>
+        </MotiView>
+    );
+};
+
+
 // --- Main App Screen ---
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -87,18 +98,22 @@ export default function HomeScreen() {
 
   const [priceData, setPriceData] = useState<PriceData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadPrices = async () => {
-    setIsLoading(true);
-    setError(null);
+    if(!isLoading) setIsLoading(true);
     try {
       const data = await fetchPricesFromAPI();
       setPriceData(data);
       setLastUpdated(new Date());
     } catch (e) {
-      setError('امکان دریافت قیمت وجود ندارد. اتصال اینترنت خود را بررسی کنید.');
+      // --- Modified Error Handling ---
+      // Show a toast message instead of setting an error state
+      Toast.show({
+        type: 'error',
+        text1: 'خطا در دریافت اطلاعات',
+        text2: 'اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -112,10 +127,12 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView style={{width: '100%'}} contentContainerStyle={{alignItems: 'center'}}>
+        {/* --- Modified Loading State --- */}
         {isLoading ? (
-          <ActivityIndicator size="large" color={theme.gold} style={{ marginTop: 50 }} />
-        ) : error ? (
-          <Text style={styles.errorText}>{error}</Text>
+          <>
+            <SkeletonCard theme={theme} />
+            <SkeletonCard theme={theme} />
+          </>
         ) : priceData ? (
           <>
             <PriceCard 
@@ -207,12 +224,8 @@ const getStyles = (theme: typeof Colors.light) => StyleSheet.create({
     marginLeft: 10,
     fontWeight: '500',
   },
-  errorText: {
-    fontSize: 18,
-    color: theme.red,
-    textAlign: 'center',
-    marginTop: 50,
-  },
+  // Error text style is no longer needed
+  // errorText: { ... },
   footer: {
     width: '100%',
     flexDirection: 'row-reverse',
