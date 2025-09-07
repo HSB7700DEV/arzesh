@@ -98,7 +98,7 @@ export default function HomeScreen() {
       setPriceData(data);
       setLastUpdated(new Date());
     } catch (e) {
-      setError('امکان دریافت قیمت وجود نداشت. لطفا دوباره تلاش کنید.');
+      setError('امکان دریافت قیمت وجود ندارد. اتصال اینترنت خود را بررسی کنید.');
     } finally {
       setIsLoading(false);
     }
