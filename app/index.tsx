@@ -44,7 +44,7 @@ interface PriceData {
 }
 
 // --- API Configuration ---
-const API_ENDPOINT = 'https://gold-prize-api.hssdbrv.workers.dev/';
+const API_ENDPOINT = 'https://sierrabravo.hssdbrv.workers.dev/api/currency';
 const fetchPricesFromAPI = async (): Promise<PriceData> => {
   const response = await fetch(API_ENDPOINT);
   if (!response.ok) {
